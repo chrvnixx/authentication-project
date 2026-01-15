@@ -1,4 +1,4 @@
-import sendVerificationEmail from "../config/emails.js";
+import { sendVerificationEmail, sendWelcomeEmail } from "../config/emails.js";
 import generateTokenAndSetCookie from "../config/generateTokenAndSetCookie.js";
 import User from "../model/User.js";
 import bcrypt from "bcrypt";
@@ -33,9 +33,9 @@ export async function signup(req, res) {
 
     generateTokenAndSetCookie(res, user._id);
 
-    await sendVerificationEmail(email, verificationToken);
-
     await user.save();
+
+    await sendVerificationEmail(email, verificationToken);
 
     res.status(201).json({
       success: true,
@@ -50,6 +50,39 @@ export async function signup(req, res) {
     console.log("Internal server error", error?.response || error?.message);
   }
 }
+
+export async function verifyEmail(req, res) {
+  const { code } = req.body;
+  try {
+    const user = await User.findOne({
+      verificationToken: code,
+      verificationTokenExpiresAt: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: true,
+        message: "Invalid or expired verification code",
+      });
+    }
+
+    (user.isVerified = true),
+      (user.verificationToken = undefined),
+      (user.verificationTokenExpiresAt = undefined);
+
+    await user.save();
+
+    await sendWelcomeEmail(user.email, user.name);
+
+    res
+      .status(200)
+      .json({ success: true, message: "User verified successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Internal server error" });
+    console.log("Internal server error", error?.response || error?.message);
+  }
+}
+
 export async function login(req, res) {
   res.send("login");
 }
