@@ -84,7 +84,42 @@ export async function verifyEmail(req, res) {
 }
 
 export async function login(req, res) {
-  res.send("login");
+  const { email, password } = req.body;
+
+  try {
+    if (!email || !password) {
+      res.json({ message: "all fields are required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.status(400).json({ success: false, message: "Invalid credentials" });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      res.status(400).json({ success: false, message: "Invalid credentials" });
+    }
+
+    generateTokenAndSetCookie(res, user._id);
+
+    user.lastLogin = new Date();
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Logged in successfully",
+      user: {
+        ...user._doc,
+        password: undefined,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Internal server error" });
+    console.log("error in login controller", error?.response || error?.message);
+  }
 }
 export async function logout(req, res) {
   res.clearCookie("token");
