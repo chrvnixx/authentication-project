@@ -1,7 +1,13 @@
-import { sendVerificationEmail, sendWelcomeEmail } from "../config/emails.js";
+import {
+  sendPasswordResetSuccessEmail,
+  sendResetPasswordTokenEmail,
+  sendVerificationEmail,
+  sendWelcomeEmail,
+} from "../config/emails.js";
 import generateTokenAndSetCookie from "../config/generateTokenAndSetCookie.js";
 import User from "../model/User.js";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 
 export async function signup(req, res) {
   const { email, password, name } = req.body;
@@ -124,4 +130,69 @@ export async function login(req, res) {
 export async function logout(req, res) {
   res.clearCookie("token");
   res.status(200).json({ success: true, message: "Logged out successfully" });
+}
+
+export async function forgotPassword(req, res) {
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.status(400).json({ success: false, message: "User not found" });
+    }
+
+    const resetPasswordToken = crypto.randomBytes(20).toString("hex");
+    const resetPasswordExpiresAt = Date.now() + 1 * 60 * 60 * 1000;
+
+    user.resetPasswordToken = resetPasswordToken;
+    user.resetPasswordExpiresAt = resetPasswordExpiresAt;
+
+    await user.save();
+
+    await sendResetPasswordTokenEmail(
+      user.email,
+      `${process.env.CLIENT_ADDRESS}/reset-password/${resetPasswordToken}`,
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Reset email sent!!",
+      user: {
+        ...user._doc,
+        password: undefined,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Internal server error" });
+    console.log(
+      "error in forgot password controller",
+      error?.response || error?.message,
+    );
+  }
+}
+
+export async function resetPassword(req, res) {
+  const { token } = req.params;
+  const { password } = req.body;
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpiresAt: { $gt: Date.now() },
+    });
+
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpiresAt = undefined;
+
+    await user.save();
+
+    await sendPasswordResetSuccessEmail(user.email);
+    res.status(200).json({ success: true, message: "Password updated!!" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Internal server error" });
+    console.log(
+      "error in reset password controller",
+      error?.response || error?.message,
+    );
+  }
 }
