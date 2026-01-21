@@ -76,6 +76,6 @@ export async function sendPasswordResetSuccessEmail(email) {
     });
     console.log("Success email sent!!!", response);
   } catch (error) {
-    console.log("Unable to send success email", error);
+    console.log("Unable to send success email", error4);
   }
 }
