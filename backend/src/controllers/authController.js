@@ -201,18 +201,18 @@ export async function checkAuth(req, res) {
   try {
     const user = await User.findById(req.userId);
     if (!user) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: "User not found",
       });
-      res.status(200).json({
-        success: true,
-        user: {
-          ...user._doc,
-          password: undefined,
-        },
-      });
     }
+    return res.status(200).json({
+      success: true,
+      user: {
+        ...user._doc,
+        password: undefined,
+      },
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: "Internal server error" });
     console.log(
