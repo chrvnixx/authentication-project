@@ -1,7 +1,7 @@
 import React from "react";
 import { CheckmarkIcon } from "react-hot-toast";
 
-function passwordCriteria({ password }) {
+function PasswordCriteria({ password }) {
   const criteria = [
     { label: "At least 6 characters", met: password.length >= 6 },
     { label: "Contains uppercase letter", met: /[A-Z]/.test(password) },
@@ -71,7 +71,7 @@ export default function PasswordStrengthMeter({ password }) {
           ></div>
         ))}
       </div>
-      <passwordCriteria />
+      <PasswordCriteria />
     </div>
   );
 }
