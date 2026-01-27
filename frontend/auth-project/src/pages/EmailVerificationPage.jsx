@@ -40,6 +40,7 @@ export default function EmailVerificationPage() {
   function handleSubmit(e) {
     e.preventDefault();
     const verificationCode = code.join("");
+    alert(`verification code submitted:${verificationCode}`);
   }
 
   //Auto submit when all fields are filled
