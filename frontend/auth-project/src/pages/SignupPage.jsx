@@ -1,9 +1,10 @@
-import { useAuthStore } from "../store/authStore";
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import Input from "../components/Input";
 import { Loader, Lock, Mail, User } from "lucide-react";
 import { Link, useNavigate } from "react-router";
+import { useAuthStore } from "../store/authStore";
+import toast from "react-hot-toast";
 
 export default function SignupPage() {
   const [name, setName] = useState("");
@@ -21,6 +22,7 @@ export default function SignupPage() {
       navigate("/verify-email");
     } catch (error) {
       console.log(error);
+      toast.error("Could not complete signup");
     }
   }
   return (
@@ -60,20 +62,19 @@ export default function SignupPage() {
           {/* <PasswordStrengthMeter password={password} /> */}
 
           {error && (
-            <p className="text-red-600 text-bold text-center">{error}</p>
+            <p className="text-red-500 font-bold text-center">{error}</p>
           )}
 
           <motion.button
-            disabled={isLoading}
-            className="mt-5 w-full py-3 px-4 bg-linear-to-r from-green-500 to-emerald-600 text-white font-bold rounded-lg shadow-lg hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition duration-200"
+            className="mt-5 w-full py-3 px-4 bg-linear-to-r from-green-500 to-emerald-600 text-white font-bold rounded-lg shadow-lg hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition duration-200 flex justify-center "
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.98 }}
             type="submit"
           >
             {isLoading ? (
-              <Loader className="animate-spin text-center" />
+              <Loader className="animate-spin text-center " />
             ) : (
-              " Sign Up"
+              "Sign Up"
             )}
           </motion.button>
         </form>
