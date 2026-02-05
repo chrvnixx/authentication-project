@@ -2,6 +2,9 @@ import { create } from "zustand";
 import axios from "axios";
 
 const API_URL = "http://localhost:4000/api/auth";
+
+axios.defaults.withCredentials = true;
+
 export const useAuthStore = create((set) => ({
   user: null,
   isAuthenticated: false,
@@ -10,7 +13,7 @@ export const useAuthStore = create((set) => ({
   isCheckingAuth: true,
 
   signup: async (email, password, name) => {
-    set({ isLoading: true, error: null });
+    set({ isLoading: false, error: null });
     try {
       const response = await axios.post(`${API_URL}/signup`, {
         email,
@@ -23,8 +26,11 @@ export const useAuthStore = create((set) => ({
         isAuthenticated: true,
       });
     } catch (error) {
-      set({ error: error.response.data.message, isLoading: false });
-      throw error;
+      set({
+        error: error.response.data.message,
+        isLoading: false,
+        isAuthenticated: false,
+      });
     }
   },
 
@@ -43,6 +49,21 @@ export const useAuthStore = create((set) => ({
     } catch (error) {
       set({ error: error.response.data.message, isLoading: false });
       throw error;
+    }
+  },
+
+  checkAuth: async () => {
+    set({ isCheckingAuth: true, error: null });
+    try {
+      const response = await axios.get(`${API_URL}/check-auth`);
+      set({
+        user: response.data.user,
+        isCheckingAuth: false,
+        isAuthenticated: true,
+      });
+    } catch (error) {
+      set({ error: null, isCheckingAuth: false, isAuthenticated: false });
+      console.log("User not authenticated");
     }
   },
 }));

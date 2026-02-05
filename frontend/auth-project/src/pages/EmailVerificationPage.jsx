@@ -15,26 +15,38 @@ export default function EmailVerificationPage() {
   function handleChange(index, value) {
     const newCode = [...code];
 
-    //Handle pasted content
-    if (value.length > 1) {
-      const pastedCode = value.slice(0, 6).split("");
-      for (let i = 0; i < 6; i++) {
-        newCode[i] = pastedCode[i] || "";
-      }
-      setCode(newCode);
-      //handle autofocus on the last non-empty or first empty one
-      const lastFilledIndex = newCode.findLastIndex((digit) => digit !== "");
-      const focusIndex = lastFilledIndex < 5 ? lastFilledIndex + 1 : 5;
-      inputRefs.current[focusIndex].focus();
-    } else {
-      newCode[index] = value;
-      setCode(newCode);
+    if (!/^\d*$/.test(value)) return false;
 
-      if (value && index < 5) {
-        inputRefs.current[index + 1].focus();
-      }
+    newCode[index] = value;
+    setCode(newCode);
+
+    if (value && index < 5) {
+      inputRefs.current[index + 1].focus();
     }
   }
+
+  function handlePaste(e) {
+    e.preventDefault();
+
+    const newCode = [...code];
+
+    const pastedCode = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, 6)
+      .split("");
+
+    if (pastedCode.length === 0) return false;
+
+    pastedCode.forEach((digit, index) => {
+      newCode[index] = digit;
+    });
+    setCode(newCode);
+
+    const focusIndex = pastedCode.length < 5 ? pastedCode.length : 5;
+    inputRefs.current[focusIndex].focus();
+  }
+
   function handleKeyDown(index, e) {
     if (e.key === "Backspace" && !code[index] && index > 0) {
       inputRefs.current[index - 1].focus();
@@ -84,6 +96,7 @@ export default function EmailVerificationPage() {
                 maxLength="6"
                 value={digit}
                 onChange={(e) => handleChange(index, e.target.value)}
+                onPaste={handlePaste}
                 onKeyDown={(e) => handleKeyDown(index, e)}
                 className="w-12 h-12 text-center text-2xl font-bold bg-gray-700 text-white border-2 border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
               />

@@ -1,12 +1,31 @@
-import { Route, Routes } from "react-router";
+import { Navigate, Route, Routes } from "react-router";
 import "./App.css";
 import FloatingShape from "./components/FloatingShape";
 import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/loginPage";
 import EmailVerificationPage from "./pages/EmailVerificationPage";
 import Dashboard from "./pages/Dashboard";
-// 123456
+import { useAuthStore } from "./store/authStore";
+import { useEffect } from "react";
+
+const RedirectAuthenticatedUser = ({ children }) => {
+  const { isAuthenticated, user } = useAuthStore();
+
+  if (isAuthenticated && user.isVerified) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+};
+
 function App() {
+  const { checkAuth, isCheckingAuth, isAuthenticated, user } = useAuthStore();
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  console.log("isAuthenticated", isAuthenticated);
+  console.log("user", user);
   return (
     <>
       <div
@@ -36,7 +55,14 @@ function App() {
         />
         <Routes>
           <Route path="/" element={"Home"} />
-          <Route path="/signup" element={<SignupPage />} />
+          <Route
+            path="/signup"
+            element={
+              <RedirectAuthenticatedUser>
+                <SignupPage />
+              </RedirectAuthenticatedUser>
+            }
+          />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/verify-email" element={<EmailVerificationPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
